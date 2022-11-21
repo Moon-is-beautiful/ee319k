@@ -31,16 +31,22 @@ void UART1_Init(void){
 	while ((SYSCTL_PRGPIO_R&0x01)==0){};
 	UART1_CTL_R &= ~0x0001;
 	//IBRD = 80M/(16*1000) = 5000
-		UART1_IBRD_R = 5000;
+		//UART1_IBRD_R = 5000;
+		//test baud rate 2000 bps IBRD = 80M/(16*2000) = 2500
+		UART1_IBRD_R = 2500;
 	//FBRD = round(0*64) = 0;
 		UART1_FBRD_R = 0;
 		UART1_LCRH_R = 0x0070;
+		UART1_IM_R |=0x10;
 		UART1_CTL_R = 0x0301;
 		
 		GPIO_PORTC_AFSEL_R |= 0x30;
-		GPIO_PORTC_PCTL_R = (GPIO_PORTC_PCTL_R&0xFF00FFFF)+0X00220000;
+		GPIO_PORTC_PCTL_R = (GPIO_PORTC_PCTL_R&0xFF00FFFF)+0x220000;
 		GPIO_PORTC_DEN_R |=0x30;
 		GPIO_PORTC_AMSEL_R &= ~0x30;
+		
+		NVIC_PRI1_R=(NVIC_PRI1_R&0xFFFF00FF)|0x04000;
+		NVIC_EN0_R|=0x40;
 }
 
 //------------UART1_InChar------------
@@ -61,6 +67,7 @@ char UART1_InChar(void){
 // Output: Null terminated string
 void UART1_InMessage(char *bufPt){
   // write this
+	
 }
 //------------UART1_OutChar------------
 // Output 8-bit to serial port
@@ -68,7 +75,7 @@ void UART1_InMessage(char *bufPt){
 // Input: letter is an 8-bit ASCII character to be transferred
 // Output: none
 void UART1_OutChar(char data){
-  while((UART1_FR_R&0x0020)!=0);
+  while((UART1_FR_R&0x0020)!=0){};
 	UART1_DR_R = data;
 }
 #define PF1       (*((volatile uint32_t *)0x40025008))
@@ -100,5 +107,6 @@ void UART1_OutString(char *pt){
     pt++;
   }
 }
+
 
 

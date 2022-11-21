@@ -42,7 +42,6 @@ void LogicAnalyzerTask(void){
 void DisableInterrupts(void); // Disable interrupts
 void EnableInterrupts(void);  // Enable interrupts
 
-
 uint32_t Data;      // 12-bit ADC
 uint32_t Position;  // 32-bit fixed-point 0.001 cm
 int32_t TxCounter = 0;
@@ -63,8 +62,7 @@ void PortF_Init(void){
 //        Minimum is determined by length of ISR
 // Output: none
 void SysTick_Init(uint32_t period){
-    // write this
-	NVIC_ST_CTRL_R = 0;
+  NVIC_ST_CTRL_R = 0;
 	NVIC_ST_RELOAD_R = period - 1;
 	NVIC_ST_CURRENT_R = 0;
 	NVIC_ST_CTRL_R = 0x0007; //enable with interrupts
@@ -74,21 +72,17 @@ void SysTick_Init(uint32_t period){
 // from the curve-fit
 uint32_t Convert(uint32_t input){
   // copy this from Lab 8 
-    return (2100*input)/4095-74;// replace this line
+    return (2100*input)/4095-74;
 }
 
-char datav;
-int delay;
-// final main program for bidirectional communication
-// Sender sends using SysTick Interrupt
-// Receiver receives using RX
+char dataReceive;
 // final main program for bidirectional communication
 // Sender sends using SysTick Interrupt
 // Receiver receives using RX
 int main(void){  
   DisableInterrupts();
-  PLL_Init();
-  //TExaS_Init(&LogicAnalyzerTask);
+  //PLL_Init();
+  TExaS_Init(&LogicAnalyzerTask);
     // write this
 	PortF_Init();
 	ST7735_InitR(INITR_REDTAB); 
@@ -105,27 +99,27 @@ int main(void){
   EnableInterrupts();
   while(1){ // runs every 10ms
   // write this
-	ST7735_SetCursor(0,0);
-
-			Fifo_Get(&datav);
-		if(datav==0x02){
+	//ST7735_SetCursor(0,0);
+	//		ST7735_OutString(" cm");
+			Fifo_Get(&dataReceive);
+		if(dataReceive=='<'){
 //			ST7735_FillScreen(0);
 			ST7735_SetCursor(0,0);
-			Fifo_Get(&datav);
-		ST7735_OutChar(datav);		//dig1
-				Fifo_Get(&datav);
-		ST7735_OutChar(datav);		//"."
-				Fifo_Get(&datav);
-		ST7735_OutChar(datav);		//dig2
-				Fifo_Get(&datav);
-		ST7735_OutChar(datav);		//dig3
-				Fifo_Get(&datav);
-		ST7735_OutChar(datav);		//dig4
-		ST7735_OutString("     cm");
+			Fifo_Get(&dataReceive);
+			ST7735_OutChar(dataReceive);
+			Fifo_Get(&dataReceive);
+			ST7735_OutChar(dataReceive);		//"."
+			Fifo_Get(&dataReceive);
+			ST7735_OutChar(dataReceive);
+			Fifo_Get(&dataReceive);
+			ST7735_OutChar(dataReceive);
+			Fifo_Get(&dataReceive);
+			ST7735_OutChar(dataReceive);
+			ST7735_OutString(" cm");
 
-			Fifo_Get(&datav);
-			ST7735_SetCursor(0,1);
-			ST7735_OutString("                 ");
+			Fifo_Get(&dataReceive);
+	//		ST7735_SetCursor(0,1);
+	//		ST7735_OutString("                 ");
 				Fifo_Init();
   }
 }
@@ -140,7 +134,7 @@ void SysTick_Handler(void){ // every 16.6 ms
 	int holder1;
 	Data=ADC_In();
 	Data=Convert(Data);
-	UART1_OutChar(0x02);
+	//UART1_OutChar(0x02);
 	UART1_OutChar(0x3C);
 	holder=Data/1000;
 	holder1=holder+0x30;
@@ -158,8 +152,9 @@ void SysTick_Handler(void){ // every 16.6 ms
 	holder1=holder+0x30;
 	UART1_OutChar(holder1);
 	UART1_OutChar(0x3E);
-	UART1_OutChar(0x0D);
-	UART1_OutChar(0x03);
+	UART1_OutChar(0x0A);
+	//UART1_OutChar(0x0D);
+	//UART1_OutChar(0x03);
 	TxCounter++;
 }
 
@@ -180,12 +175,11 @@ int main2(void){ // Make this main to test Fifo
   char mydata,yourdata,data;
   PLL_Init();
   PortF_Init();
-	ADC_Init();
   // your FIFO must be larger than 8 and less than 63
   Fifo_Init();     // your FIFO
   M = 4; // seed
   FifoError = 0;
-  MyFifo_Init(17); // change 17 to match your FIFO size
+  MyFifo_Init(60); // change 17 to match your FIFO size
   for(uint32_t i = 0; i<10000; i++){
     uint32_t k = Random(4);
     for(uint32_t l=0; l<k ;l++){

@@ -8,17 +8,17 @@
 
 // Declare state variables for FiFo
 //        size, buffer, put and get indexes
-#define FIFO_SIZE 10
+#define FIFO_SIZE 60
 int32_t static PutI; // Index to put new
 int32_t static GetI; // Index of oldest 
 int32_t static FIFO[FIFO_SIZE];
+
 
 // *********** FiFo_Init**********
 // Initializes a software FIFO of a
 // fixed size and sets up indexes for
 // put and get operations
 void Fifo_Init() {
-//Complete this
 	PutI = GetI = 0;
 }
 
@@ -30,12 +30,11 @@ void Fifo_Init() {
 uint32_t Fifo_Put(char data) {
   //Complete this routine
    if ( ((PutI+1)%FIFO_SIZE) ==GetI) {
-		 return(0);
+		 return 0;
 	}
 	 FIFO[PutI] = data;
 	 PutI = (PutI+1)%FIFO_SIZE;
-   return(1);
-
+   return 1;
 }
 
 // *********** Fifo_Get**********
@@ -46,10 +45,13 @@ uint32_t Fifo_Put(char data) {
 uint32_t Fifo_Get(char *datapt)
 {
   //Complete this routine
-   if (GetI == PutI) {
-		 return(0);
+  if (GetI == PutI) {
+		 return 0;
  	}
 	 *datapt = FIFO[GetI];
 	 GetI = (GetI+1)%FIFO_SIZE;
-   return(1);
+   return 1;
 }
+
+
+
