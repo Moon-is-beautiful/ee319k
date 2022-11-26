@@ -32,6 +32,7 @@
 #include "Images.h"
 #include "Sound.h"
 #include "Timer1.h"
+#define bottom 100
 
 void DisableInterrupts(void); // Disable interrupts
 void EnableInterrupts(void);  // Enable interrupts
@@ -40,45 +41,45 @@ void hitcheck(); //function that checks if anything hit each other
 void draw();//draw anything that exist
 void bulletmove();
 void playermove();
-void menu();
+void fire();
 void gameover();
-
+void convert(uint32_t x);
 
 struct bhd{
 	int coordx,coordy;
 	const uint16_t *p;
-	int w,h,exist,health;
+	int w,h,exist,health,score;
 };
 typedef struct bhd state;
 state enemy[12]={
-	{0,0,SmallEnemy30pointB,16,10,0,0},//e1
-	{0,0,SmallEnemy20pointB,16,10,0,0},//e2
-	{0,0,SmallEnemy10pointB,16,10,0,0},//e3
-	{0,0,SmallEnemy30pointB,16,10,0,0},//e4
-	{0,0,SmallEnemy20pointB,16,10,0,0},//e5
-	{0,0,SmallEnemy10pointB,16,10,0,0},//e6
-	{0,0,SmallEnemy30pointB,16,10,0,0},//e7
-	{0,0,SmallEnemy20pointB,16,10,0,0},//e8
-	{0,0,SmallEnemy10pointB,16,10,0,0},//e9
-	{0,0,SmallEnemy30pointB,16,10,0,0},//e10
-	{0,0,SmallEnemy20pointB,16,10,0,0},//e11
-	{0,0,SmallEnemy10pointB,16,10,0,0},//e12
+	{0,0,SmallEnemy30pointB,16,10,0,0,30},//e1
+	{0,0,SmallEnemy20pointB,16,10,0,0,20},//e2
+	{0,0,SmallEnemy10pointB,16,10,0,0,10},//e3
+	{0,0,SmallEnemy30pointB,16,10,0,0,30},//e4
+	{0,0,SmallEnemy20pointB,16,10,0,0,20},//e5
+	{0,0,SmallEnemy10pointB,16,10,0,0,10},//e6
+	{0,0,SmallEnemy30pointB,16,10,0,0,30},//e7
+	{0,0,SmallEnemy20pointB,16,10,0,0,20},//e8
+	{0,0,SmallEnemy10pointB,16,10,0,0,10},//e9
+	{0,0,SmallEnemy30pointB,16,10,0,0,30},//e10
+	{0,0,SmallEnemy20pointB,16,10,0,0,20},//e11
+	{0,0,SmallEnemy10pointB,16,10,0,0,10},//e12
 };
 state enemy_bullet[3]={ 
-	{0,0,SmallEnemy10pointB,16,10,0,0},
-	{0,0,SmallEnemy10pointB,16,10,0,0},
-	{0,0,SmallEnemy10pointB,16,10,0,0}
+	{0,0,SmallEnemy10pointB,16,10,0,0,0},
+	{0,0,SmallEnemy10pointB,16,10,0,0,0},
+	{0,0,SmallEnemy10pointB,16,10,0,0,0}
 };
 state player[3]={ 
-	{0,0,PlayerShip0,16,10,1,3}
+	{0,0,PlayerShip0,16,10,1,3,0}
 };
 state player_bullet[1]={ 
-	{0,0,SmallEnemy10pointB,16,10,0,0}
+	{0,0,SmallEnemy10pointB,16,10,0,0,0}
 };
 state bunker[3]={
-	{0,0,Bunker0,16,10,0,0},
-	{0,0,Bunker0,16,10,0,0},
-	{0,0,Bunker0,16,10,0,0}
+	{0,0,Bunker0,16,10,0,3,0},
+	{0,0,Bunker0,16,10,0,3,0},
+	{0,0,Bunker0,16,10,0,3,0}
 };
 
 
@@ -156,7 +157,7 @@ const char *Phrases[3][4]={
   {Goodbye_English,Goodbye_Spanish,Goodbye_Portuguese,Goodbye_French},
   {Language_English,Language_Spanish,Language_Portuguese,Language_French}
 };
-
+int score;
 int main(void){ char l;
   DisableInterrupts();
   TExaS_Init(NONE);       // Bus clock is 80 MHz 
@@ -173,33 +174,15 @@ int main(void){ char l;
   Delay100ms(30);
   ST7735_FillScreen(0x0000);       // set screen to black
   l = 128;
-	int flag=0;
   while(1){
-		if(flag==0){
-			menu();
+		playermove();
+		bulletmove();
+		hitcheck();
+		draw();
+		if(player[0].health==0){
+			gameover();		
 		}
-		else{
-			playermove();
-			bulletmove();
-			hitcheck();
-			draw();
-			if(player[0].health==0){
-				gameover();
-			}
-			
-		}
-    Delay100ms(20);
-    for(int j=0; j < 3; j++){
-      for(int i=0;i<16;i++){
-        ST7735_SetCursor(7*j+0,i);
-        ST7735_OutUDec(l);
-        ST7735_OutChar(' ');
-        ST7735_OutChar(' ');
-        ST7735_SetCursor(7*j+4,i);
-        ST7735_OutChar(l);
-        l++;
-      }
-    }
+    Delay100ms(1);
   }  
 }
 
@@ -228,10 +211,62 @@ void draw(){
 		}
 }
 
+void bulletmove(){
+	if(player_bullet[0].exist==1){
+		if(player_bullet[0].coordy==0){
+			player_bullet[0].exist=0;
+		}
+		else{
+			player_bullet[0].coordy-=2;
+		}
+	}
+	else{
+		for(int i=0;i<3;i++){
+			if(enemy_bullet[i].exist==1){
+				if(enemy_bullet[i].coordy==bottom){
+					enemy_bullet[i].exist=0;
+				}
+				else{
+					enemy_bullet[i].coordy+=2;
+				}
+			}
+		}
+	}
+}
+void playermove(){
+	if(player[0].exist){
+		player[0].coordx=ADC_In();
+	}
+}
+void fire();
+void reset(){
+	player[0].exist=1;
+	player[0].health=3;
+	for(int i=0;i<3;i++){
+		bunker[i].exist=1;
+		bunker[i].health=3;
+	}
+	score=0;
+}
+void spawn();
+void gameover(){
+	ST7735_OutString("Score: ");
+	ST7735_OutUDec(score);
+  ST7735_OutChar(13);
+	ST7735_OutString("press attack to restart");
+	while(GPIO_PORTF_DATA_R==1);
+	while(GPIO_PORTF_DATA_R==0);
+	spawn();
+	reset();
+}
+
+uint32_t Convert(uint32_t x){
+  // write this
+  return (1852*x)/4095-74;
+}
+
 void hitcheck(){
-	int i;
-	int s;
-	for(i=0;i<12;i++){
+	for(int i=0;i<12;i++){
 		if(enemy[i].exist==1){
 			if(player_bullet[0].coordx>=enemy[i].coordx
 				&&player_bullet[0].coordx<=enemy[i].coordx+enemy[i].w
@@ -239,19 +274,35 @@ void hitcheck(){
 				&&player_bullet[0].coordy<=enemy[i].coordx+enemy[i].h){
 					player_bullet[0].exist=0;
 					enemy[i].exist=0;
+					score+=enemy[i].score;
 				}
 		}
 	}
-	for(i=0;i<3;i++){
+	for(int i=0;i<3;i++){
 		if(enemy_bullet[i].exist==1){
 			if(enemy_bullet[i].coordx>=player[0].coordx
-				&&enemy_bullet[i].coordx<=player[0].coordx+enemy[i].w
+				&&enemy_bullet[i].coordx<=player[0].coordx+player[0].w
 				&&enemy_bullet[i].coordy>=player[0].coordy
-				&&enemy_bullet[i].coordy<=player[0].coordx+enemy[i].h){
+				&&enemy_bullet[i].coordy<=player[0].coordx+player[0].h){
 					enemy_bullet[i].exist=0;
 					player[0].health--;			
 				}
 		}
 	}
-	//missing hitcheck for enemy bullet to bunker
+	for(int i;i<3;i++){
+		for(int s;s<3;s++){
+			if(bunker[s].exist==1&&enemy_bullet[i].exist==1){
+				if(enemy_bullet[i].coordx>=bunker[s].coordx
+				&&enemy_bullet[i].coordx<=bunker[s].coordx+bunker[s].w
+				&&enemy_bullet[i].coordy>=bunker[s].coordy
+				&&enemy_bullet[i].coordy<=bunker[s].coordx+bunker[s].h){
+					enemy_bullet[i].exist=0;
+					bunker[s].health--;
+					if(bunker[s].health==0){
+						bunker[s].exist=0;
+					}
+				}
+			}
+		}
+	}
 }
