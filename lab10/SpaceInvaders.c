@@ -38,6 +38,12 @@ void EnableInterrupts(void);  // Enable interrupts
 void Delay100ms(uint32_t count); // time delay in 0.1 seconds
 void hitcheck(); //function that checks if anything hit each other
 void draw();//draw anything that exist
+void bulletmove();
+void playermove();
+void menu();
+void gameover();
+
+
 struct bhd{
 	int coordx,coordy;
 	const uint16_t *p;
@@ -167,7 +173,21 @@ int main(void){ char l;
   Delay100ms(30);
   ST7735_FillScreen(0x0000);       // set screen to black
   l = 128;
+	int flag=0;
   while(1){
+		if(flag==0){
+			menu();
+		}
+		else{
+			playermove();
+			bulletmove();
+			hitcheck();
+			draw();
+			if(player[0].health==0){
+				gameover();
+			}
+			
+		}
     Delay100ms(20);
     for(int j=0; j < 3; j++){
       for(int i=0;i<16;i++){
@@ -185,28 +205,53 @@ int main(void){ char l;
 
 void draw(){
 	int i;
-	for(i=0;i<=12;i++){
+	for(i=0;i<12;i++){
 		if(enemy[i].exist==1){
 			ST7735_DrawBitmap(enemy[i].coordx,enemy[i].coordy,enemy[i].p,enemy[i].w,enemy[i].h);
 		}
 	}
-	for(i=0;i<=3;i++){
+	for(i=0;i<3;i++){
 		if(enemy_bullet[i].exist==1){
 			ST7735_DrawBitmap(enemy_bullet[i].coordx,enemy_bullet[i].coordy,enemy_bullet[i].p,enemy_bullet[i].w,enemy_bullet[i].h);
 		}
 	}
-	for(i=0;i<=3;i++){
+	for(i=0;i<3;i++){
 		if(bunker[i].exist==1){
 			ST7735_DrawBitmap(bunker[i].coordx,bunker[i].coordy,bunker[i].p,bunker[i].w,bunker[i].h);
 		}
 	}
 		if(player[0].exist==1){
-			ST7735_DrawBitmap(player[i].coordx,player[i].coordy,player[i].p,player[i].w,player[i].h);
+			ST7735_DrawBitmap(player[0].coordx,player[0].coordy,player[0].p,player[0].w,player[0].h);
 		}
 		if(player_bullet[0].exist==1){
-			ST7735_DrawBitmap(player_bullet[i].coordx,player_bullet[i].coordy,player_bullet[i].p,player_bullet[i].w,player_bullet[i].h);
+			ST7735_DrawBitmap(player_bullet[0].coordx,player_bullet[0].coordy,player_bullet[0].p,player_bullet[0].w,player_bullet[0].h);
 		}
 }
+
 void hitcheck(){
-	
+	int i;
+	int s;
+	for(i=0;i<12;i++){
+		if(enemy[i].exist==1){
+			if(player_bullet[0].coordx>=enemy[i].coordx
+				&&player_bullet[0].coordx<=enemy[i].coordx+enemy[i].w
+				&&player_bullet[0].coordy>=enemy[i].coordy
+				&&player_bullet[0].coordy<=enemy[i].coordx+enemy[i].h){
+					player_bullet[0].exist=0;
+					enemy[i].exist=0;
+				}
+		}
+	}
+	for(i=0;i<3;i++){
+		if(enemy_bullet[i].exist==1){
+			if(enemy_bullet[i].coordx>=player[0].coordx
+				&&enemy_bullet[i].coordx<=player[0].coordx+enemy[i].w
+				&&enemy_bullet[i].coordy>=player[0].coordy
+				&&enemy_bullet[i].coordy<=player[0].coordx+enemy[i].h){
+					enemy_bullet[i].exist=0;
+					player[0].health--;			
+				}
+		}
+	}
+	//missing hitcheck for enemy bullet to bunker
 }
