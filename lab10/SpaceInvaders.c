@@ -207,7 +207,7 @@ int main(void){ char l;
 		}
 		for (int i=0; i<12; i++)
 		{
-			b = b&enemy[i].exist;
+			b = b|enemy[i].exist;
 		}
 		if(b==0){
 			spawn();
@@ -257,7 +257,7 @@ void bulletmove(){
 			player_bullet[0].exist=0;
 		}
 		else{
-			player_bullet[0].coordy-=2;
+			player_bullet[0].coordy-=10;
 		}
 	}
 	else{
@@ -267,7 +267,7 @@ void bulletmove(){
 					enemy_bullet[i].exist=0;
 				}
 				else{
-					enemy_bullet[i].coordy+=2;
+					enemy_bullet[i].coordy+=10;
 				}
 			}
 		}
@@ -349,16 +349,16 @@ uint32_t Convert(uint32_t x){
 
 void hitcheck(){
 	for(int i=0;i<12;i++){
-		if(enemy[i].exist==1){
-			if(player_bullet[0].coordx>=enemy[i].coordx
-				&&player_bullet[0].coordx<=enemy[i].coordx+enemy[i].w
-				&&player_bullet[0].coordy>=enemy[i].coordy-enemy[i].h
-				&&player_bullet[0].coordy<=enemy[i].coordy){
-					player_bullet[0].exist=0;
-					enemy[i].exist=0;
-					score+=enemy[i].score;
-				}
-		}
+			if(player_bullet[0].exist==1&&enemy[i].exist==1){
+				if(player_bullet[0].coordx>=enemy[i].coordx
+					&&player_bullet[0].coordx<=enemy[i].coordx+enemy[i].w
+					&&player_bullet[0].coordy>=enemy[i].coordy-enemy[i].h
+					&&player_bullet[0].coordy<=enemy[i].coordy){
+						player_bullet[0].exist=0;
+						enemy[i].exist=0;
+						score+=enemy[i].score;
+					}
+			}
 	}
 	for(int i=0;i<3;i++){
 		if(enemy_bullet[i].exist==1){
