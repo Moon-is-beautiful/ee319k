@@ -32,7 +32,8 @@
 #include "Images.h"
 #include "Sound.h"
 #include "Timer1.h"
-#define bottom 100
+#define bottom 152
+#define True_bottom 159
 
 void DisableInterrupts(void); // Disable interrupts
 void EnableInterrupts(void);  // Enable interrupts
@@ -42,7 +43,7 @@ void draw();//draw anything that exist
 void bulletmove();
 void playermove();
 void fire();
-void spawm();
+void spawn();
 void gameover();
 void convert(uint32_t x);
 
@@ -67,20 +68,20 @@ state enemy[12]={
 	{0,0,SmallEnemy10pointB,16,10,0,0,10},//e12
 };
 state enemy_bullet[3]={ 
-	{0,0,SmallEnemy10pointB,16,10,0,0,0},
-	{0,0,SmallEnemy10pointB,16,10,0,0,0},
-	{0,0,SmallEnemy10pointB,16,10,0,0,0}
+	{0,0,bullet,2,3,0,0,0},
+	{0,0,bullet,2,3,0,0,0},
+	{0,0,bullet,2,3,0,0,0}
 };
-state player[3]={ 
-	{0,0,PlayerShip0,16,10,1,3,0}
+state player[1]={ 
+	{0,bottom,PlayerShip0,18,8,1,3,0}
 };
 state player_bullet[1]={ 
-	{0,0,SmallEnemy10pointB,16,10,0,0,0}
+	{0,0,bullet,2,3,0,0,0}
 };
 state bunker[3]={
-	{0,0,Bunker0,16,10,0,3,0},
-	{0,0,Bunker0,16,10,0,3,0},
-	{0,0,Bunker0,16,10,0,3,0}
+	{0,0,Bunker0,18,5,0,3,0},
+	{0,0,Bunker0,18,5,0,3,0},
+	{0,0,Bunker0,18,5,0,3,0}
 };
 
 
@@ -158,12 +159,24 @@ const char *Phrases[3][4]={
   {Goodbye_English,Goodbye_Spanish,Goodbye_Portuguese,Goodbye_French},
   {Language_English,Language_Spanish,Language_Portuguese,Language_French}
 };
+//PortE initilize, PE0 and PE1 for language choosing, PE2 and PE3 for game starting/ending
+	void PortE_Init(void){
+	uint32_t delay;
+	SYSCTL_RCGCGPIO_R |= 0x10;
+	delay=0;
+	SYSCTL_RCGCGPIO_R |= 0x10;
+	while((SYSCTL_PRGPIO_R&0x10) == 0){};
+	GPIO_PORTE_DIR_R &= ~0x0F;
+	GPIO_PORTE_AFSEL_R &= ~0x0F;
+	GPIO_PORTE_AMSEL_R &= ~0x0F;
+	GPIO_PORTE_DEN_R |= 0x0F;
+}
 int score;
-int speed;
 int main(void){ char l;
   DisableInterrupts();
   TExaS_Init(NONE);       // Bus clock is 80 MHz 
   Output_Init();
+	ADC_Init();
   ST7735_FillScreen(0x0000);            // set screen to black
   for(phrase_t myPhrase=HELLO; myPhrase<= GOODBYE; myPhrase++){
     for(Language_t myL=English; myL<= French; myL++){
@@ -177,6 +190,14 @@ int main(void){ char l;
   ST7735_FillScreen(0x0000);       // set screen to black
   l = 128;
   while(1){
+		for(int i=0;i<8;i++){
+         ST7735_SetCursor(0,i);
+  	  ST7735_OutUDec(l);
+  	  ST7735_OutChar(' ');
+  	  ST7735_OutChar(l);
+         l++;
+       }
+		
 		int b=0;
 		playermove();
 		bulletmove();
@@ -186,8 +207,9 @@ int main(void){ char l;
 		if(player[0].health==0){
 			gameover();		
 		}
-		for(int i=0;i<12;i++){
-			b=b&enemy[i].exist;
+		for (int i=0; i<12; i++)
+		{
+			b = b&enemy[i].exist;
 		}
 		if(b==0){
 			spawn();
@@ -214,11 +236,21 @@ void draw(){
 		}
 	}
 		if(player[0].exist==1){
-			ST7735_DrawBitmap(player[0].coordx,player[0].coordy,player[0].p,player[0].w,player[0].h);
+			if(player[0].health==3){
+			ST7735_DrawBitmap(player[0].coordx,player[0].coordy,PlayerShip0,player[0].w,player[0].h);}
+			else if(player[0].health==2){
+				ST7735_DrawBitmap(player[0].coordx,player[0].coordy,PlayerShip1,player[0].w,player[0].h);
+			}
+			else if(player[0].health==1){
+				ST7735_DrawBitmap(player[0].coordx,player[0].coordy,PlayerShip2,player[0].w,player[0].h);
+
+			}
 		}
 		if(player_bullet[0].exist==1){
 			ST7735_DrawBitmap(player_bullet[0].coordx,player_bullet[0].coordy,player_bullet[0].p,player_bullet[0].w,player_bullet[0].h);
 		}
+		ST7735_OutString("Score: ");
+		ST7735_OutUDec(score);
 }
 
 void bulletmove(){
@@ -233,7 +265,7 @@ void bulletmove(){
 	else{
 		for(int i=0;i<3;i++){
 			if(enemy_bullet[i].exist==1){
-				if(enemy_bullet[i].coordy==bottom){
+				if(enemy_bullet[i].coordy==True_bottom){
 					enemy_bullet[i].exist=0;
 				}
 				else{
@@ -249,10 +281,13 @@ void playermove(){
 	}
 }
 void fire(){
-	if(GPIO_PORTF_DATA_R==1){
+	int val = GPIO_PORTE_DATA_R&0x04;
+	val = val >> 2;
+	if(val == 1)
+	{
 		player_bullet[0].exist=1;
 		player_bullet[0].coordy=bottom;
-		player_bullet[0].coordx=player[0].coordx;
+		player_bullet[0].coordx=player[0].coordx+(player[0].w/2);
 	}
 }
 void reset(){
@@ -264,6 +299,7 @@ void reset(){
 	}
 	score=0;
 }
+void spawn();
 
 void gameover(){
 	ST7735_OutString("Score: ");
