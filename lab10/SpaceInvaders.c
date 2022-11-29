@@ -158,6 +158,7 @@ const char *Phrases[3][4]={
   {Language_English,Language_Spanish,Language_Portuguese,Language_French}
 };
 int score;
+int speed;
 int main(void){ char l;
   DisableInterrupts();
   TExaS_Init(NONE);       // Bus clock is 80 MHz 
@@ -238,7 +239,13 @@ void playermove(){
 		player[0].coordx=ADC_In();
 	}
 }
-void fire();
+void fire(){
+	if(GPIO_PORTF_DATA_R==1){
+		player_bullet[0].exist=1;
+		player_bullet[0].coordy=bottom;
+		player_bullet[0].coordx=player[0].coordx;
+	}
+}
 void reset(){
 	player[0].exist=1;
 	player[0].health=3;
