@@ -32,8 +32,8 @@
 #include "Images.h"
 #include "Sound.h"
 #include "Timer1.h"
-#define bottom 152
-#define True_bottom 159
+#define bottom 159
+
 
 void DisableInterrupts(void); // Disable interrupts
 void EnableInterrupts(void);  // Enable interrupts
@@ -176,6 +176,7 @@ int main(void){ char l;
   DisableInterrupts();
   TExaS_Init(NONE);       // Bus clock is 80 MHz 
   Output_Init();
+	PortE_Init();
 	ADC_Init();
   ST7735_FillScreen(0x0000);            // set screen to black
   for(phrase_t myPhrase=HELLO; myPhrase<= GOODBYE; myPhrase++){
@@ -186,19 +187,14 @@ int main(void){ char l;
       ST7735_OutChar(13);
     }
   }
-  Delay100ms(30);
+  Delay100ms(5);
   ST7735_FillScreen(0x0000);       // set screen to black
   l = 128;
+	spawn();
   while(1){
-		for(int i=0;i<8;i++){
-         ST7735_SetCursor(0,i);
-  	  ST7735_OutUDec(l);
-  	  ST7735_OutChar(' ');
-  	  ST7735_OutChar(l);
-         l++;
-       }
-		
 		int b=0;
+		ST7735_FillScreen(0x0000); 
+		ST7735_SetCursor(0,0);
 		playermove();
 		bulletmove();
 		hitcheck();
@@ -265,7 +261,7 @@ void bulletmove(){
 	else{
 		for(int i=0;i<3;i++){
 			if(enemy_bullet[i].exist==1){
-				if(enemy_bullet[i].coordy==True_bottom){
+				if(enemy_bullet[i].coordy==bottom){
 					enemy_bullet[i].exist=0;
 				}
 				else{
@@ -299,7 +295,39 @@ void reset(){
 	}
 	score=0;
 }
-void spawn();
+void spawn(){
+    for (int i=0; i<12; i++)
+    {
+        enemy[i].exist = 1;
+    }
+    //point 30 on top
+    enemy[0].coordx=12; 
+    enemy[0].coordy=20;
+    enemy[3].coordx=38; 
+    enemy[3].coordy=20;
+    enemy[6].coordx=64; 
+    enemy[6].coordy=20;
+    enemy[9].coordx=90; 
+    enemy[9].coordy=20;
+    //point 20 in middle
+    enemy[1].coordx=12; 
+    enemy[1].coordy=35;
+    enemy[4].coordx=38; 
+    enemy[4].coordy=35;
+    enemy[7].coordx=64; 
+    enemy[7].coordy=35;
+    enemy[10].coordx=90; 
+    enemy[10].coordy=35;
+    //point 10 at bottom
+    enemy[2].coordx=12; 
+    enemy[2].coordy=50;
+    enemy[5].coordx=38; 
+    enemy[5].coordy=50;
+    enemy[8].coordx=64; 
+    enemy[8].coordy=50;
+    enemy[11].coordx=90; 
+    enemy[11].coordy=50;
+}
 
 void gameover(){
 	ST7735_OutString("Score: ");
@@ -322,8 +350,8 @@ void hitcheck(){
 		if(enemy[i].exist==1){
 			if(player_bullet[0].coordx>=enemy[i].coordx
 				&&player_bullet[0].coordx<=enemy[i].coordx+enemy[i].w
-				&&player_bullet[0].coordy>=enemy[i].coordy
-				&&player_bullet[0].coordy<=enemy[i].coordx+enemy[i].h){
+				&&player_bullet[0].coordy>=enemy[i].coordy-enemy[i].h
+				&&player_bullet[0].coordy<=enemy[i].coordy){
 					player_bullet[0].exist=0;
 					enemy[i].exist=0;
 					score+=enemy[i].score;
@@ -334,8 +362,8 @@ void hitcheck(){
 		if(enemy_bullet[i].exist==1){
 			if(enemy_bullet[i].coordx>=player[0].coordx
 				&&enemy_bullet[i].coordx<=player[0].coordx+player[0].w
-				&&enemy_bullet[i].coordy>=player[0].coordy
-				&&enemy_bullet[i].coordy<=player[0].coordx+player[0].h){
+				&&enemy_bullet[i].coordy>=player[0].coordy-player[0].h
+				&&enemy_bullet[i].coordy<=player[0].coordy){
 					enemy_bullet[i].exist=0;
 					player[0].health--;			
 				}
@@ -346,8 +374,8 @@ void hitcheck(){
 			if(bunker[s].exist==1&&enemy_bullet[i].exist==1){
 				if(enemy_bullet[i].coordx>=bunker[s].coordx
 				&&enemy_bullet[i].coordx<=bunker[s].coordx+bunker[s].w
-				&&enemy_bullet[i].coordy>=bunker[s].coordy
-				&&enemy_bullet[i].coordy<=bunker[s].coordx+bunker[s].h){
+				&&enemy_bullet[i].coordy>=bunker[s].coordy-bunker[s].h
+				&&enemy_bullet[i].coordy<=bunker[s].coordy){
 					enemy_bullet[i].exist=0;
 					bunker[s].health--;
 					if(bunker[s].health==0){
