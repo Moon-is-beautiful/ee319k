@@ -44,8 +44,9 @@ void bulletmove();
 void playermove();
 void fire();
 void spawn();
+void reset();
 void gameover();
-void convert(uint32_t x);
+uint32_t Convert(uint32_t x);
 
 struct bhd{
 	int coordx,coordy;
@@ -79,9 +80,9 @@ state player_bullet[1]={
 	{0,0,bullet,2,3,0,0,0}
 };
 state bunker[3]={
-	{0,0,Bunker0,18,5,0,3,0},
-	{0,0,Bunker0,18,5,0,3,0},
-	{0,0,Bunker0,18,5,0,3,0}
+	{17,140,Bunker0,18,5,0,3,0},
+	{55,140,Bunker0,18,5,0,3,0},
+	{93,140,Bunker0,18,5,0,3,0}
 };
 
 
@@ -191,6 +192,7 @@ int main(void){ char l;
   ST7735_FillScreen(0x0000);       // set screen to black
   l = 128;
 	spawn();
+	reset();
   while(1){
 		int b=0;
 		ST7735_FillScreen(0x0000); 
@@ -273,7 +275,7 @@ void bulletmove(){
 }
 void playermove(){
 	if(player[0].exist){
-		player[0].coordx=ADC_In();
+		player[0].coordx=Convert(ADC_In());
 	}
 }
 void fire(){
@@ -342,7 +344,7 @@ void gameover(){
 
 uint32_t Convert(uint32_t x){
   // write this
-  return (1852*x)/4095-74;
+  return x/35;
 }
 
 void hitcheck(){
