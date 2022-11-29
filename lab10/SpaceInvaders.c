@@ -42,6 +42,7 @@ void draw();//draw anything that exist
 void bulletmove();
 void playermove();
 void fire();
+void spawm();
 void gameover();
 void convert(uint32_t x);
 
@@ -176,12 +177,20 @@ int main(void){ char l;
   ST7735_FillScreen(0x0000);       // set screen to black
   l = 128;
   while(1){
+		int b=0;
 		playermove();
 		bulletmove();
 		hitcheck();
 		draw();
+		fire();
 		if(player[0].health==0){
 			gameover();		
+		}
+		for(int i=0;i<12;i++){
+			b=b&enemy[i].exist;
+		}
+		if(b==0){
+			spawn();
 		}
     Delay100ms(1);
   }  
@@ -255,7 +264,7 @@ void reset(){
 	}
 	score=0;
 }
-void spawn();
+
 void gameover(){
 	ST7735_OutString("Score: ");
 	ST7735_OutUDec(score);
