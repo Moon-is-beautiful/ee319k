@@ -47,6 +47,9 @@ void spawn();
 void reset();
 void gameover();
 uint32_t Convert(uint32_t x);
+void enemyfire(int x);
+void enemymove();
+int flag;
 
 struct bhd{
 	int coordx,coordy;
@@ -173,7 +176,8 @@ const char *Phrases[3][4]={
 	GPIO_PORTE_DEN_R |= 0x0F;
 }
 int score;
-int main(void){ char l;
+int main(void){ 
+	char l;
   DisableInterrupts();
   TExaS_Init(NONE);       // Bus clock is 80 MHz 
   Output_Init();
@@ -193,16 +197,18 @@ int main(void){ char l;
   l = 128;
 	spawn();
 	reset();
+  flag=0;
   while(1){
 		int b=0;
 		ST7735_FillScreen(0x0000); 
 		ST7735_SetCursor(0,0);
+		enemymove();
 		playermove();
 		bulletmove();
 		hitcheck();
 		draw();
 		fire();
-		if(player[0].health==0){
+		if(player[0].health==0||enemy[2].coordy>=140){
 			gameover();		
 		}
 		for (int i=0; i<12; i++)
@@ -278,14 +284,33 @@ void playermove(){
 		player[0].coordx=Convert(ADC_In());
 	}
 }
+void enemyfire(int x){
+	if(enemy_bullet[0].exist==0){
+		enemy_bullet[0].exist=1;
+		enemy_bullet[0].coordy=enemy[x].coordy;
+		enemy_bullet[0].coordx=enemy[x].coordx+(enemy[x].w/2);
+	}
+	else if(enemy_bullet[1].exist==0){
+		enemy_bullet[1].exist=1;
+		enemy_bullet[1].coordy=enemy[x].coordy;
+		enemy_bullet[1].coordx=enemy[x].coordx+(enemy[x].w/2);
+	}
+	else if(enemy_bullet[2].exist==0){
+		enemy_bullet[2].exist=1;
+		enemy_bullet[2].coordy=enemy[x].coordy;
+		enemy_bullet[2].coordx=enemy[x].coordx+(enemy[x].w/2);
+	}
+}
 void fire(){
-	int val = GPIO_PORTE_DATA_R&0x04;
-	val = val >> 2;
-	if(val == 1)
-	{
-		player_bullet[0].exist=1;
-		player_bullet[0].coordy=bottom;
-		player_bullet[0].coordx=player[0].coordx+(player[0].w/2);
+	if(player_bullet[0].exist==0){
+		int val = GPIO_PORTE_DATA_R&0x04;
+		val = val >> 2;
+		if(val == 1)
+		{
+			player_bullet[0].exist=1;
+			player_bullet[0].coordy=bottom;
+			player_bullet[0].coordx=player[0].coordx+(player[0].w/2);
+		}
 	}
 }
 void reset(){
@@ -296,6 +321,7 @@ void reset(){
 		bunker[i].health=3;
 	}
 	score=0;
+	flag=0;
 }
 void spawn(){
     for (int i=0; i<12; i++)
@@ -303,41 +329,48 @@ void spawn(){
         enemy[i].exist = 1;
     }
     //point 30 on top
-    enemy[0].coordx=12; 
+    enemy[0].coordx=22; 
     enemy[0].coordy=20;
-    enemy[3].coordx=38; 
+    enemy[3].coordx=43; 
     enemy[3].coordy=20;
     enemy[6].coordx=64; 
     enemy[6].coordy=20;
-    enemy[9].coordx=90; 
+    enemy[9].coordx=85; 
     enemy[9].coordy=20;
     //point 20 in middle
-    enemy[1].coordx=12; 
-    enemy[1].coordy=35;
-    enemy[4].coordx=38; 
-    enemy[4].coordy=35;
+    enemy[1].coordx=22; 
+    enemy[1].coordy=33;
+    enemy[4].coordx=43; 
+    enemy[4].coordy=33;
     enemy[7].coordx=64; 
-    enemy[7].coordy=35;
-    enemy[10].coordx=90; 
-    enemy[10].coordy=35;
+    enemy[7].coordy=33;
+    enemy[10].coordx=85; 
+    enemy[10].coordy=33;
     //point 10 at bottom
-    enemy[2].coordx=12; 
-    enemy[2].coordy=50;
-    enemy[5].coordx=38; 
-    enemy[5].coordy=50;
+    enemy[2].coordx=22; 
+    enemy[2].coordy=46;
+    enemy[5].coordx=43; 
+    enemy[5].coordy=46;
     enemy[8].coordx=64; 
-    enemy[8].coordy=50;
-    enemy[11].coordx=90; 
-    enemy[11].coordy=50;
+    enemy[8].coordy=46;
+    enemy[11].coordx=85; 
+    enemy[11].coordy=46;
 }
-
 void gameover(){
+	int t=0;
+	ST7735_FillScreen(0x0000); 
+	ST7735_SetCursor(0,0);
 	ST7735_OutString("Score: ");
 	ST7735_OutUDec(score);
   ST7735_OutChar(13);
-	ST7735_OutString("press attack to restart");
-	while(GPIO_PORTF_DATA_R==1);
-	while(GPIO_PORTF_DATA_R==0);
+	ST7735_OutString("press pause to restart");
+	while(t==0){
+		int val = GPIO_PORTE_DATA_R&0x08;
+		val = val >> 3;
+		if(val == 1){
+			t=1;
+		}
+	}
 	spawn();
 	reset();
 }
@@ -384,6 +417,35 @@ void hitcheck(){
 						bunker[s].exist=0;
 					}
 				}
+			}
+		}
+	}
+}
+
+void enemymove(){
+	if(flag==0){
+		if(enemy[9].coordx>=110){
+			for(int i=0;i<12;i++){
+				enemy[i].coordy+=5;
+			}
+			flag=1;
+		}
+		else{
+			for(int i=0;i<12;i++){
+				enemy[i].coordx+=5;
+			}
+		}
+	}
+	else{
+		if(enemy[0].coordx<=2){
+			for(int i=0;i<12;i++){
+				enemy[i].coordy+=5;
+			}
+			flag=0;
+		}
+		else{
+			for(int i=0;i<12;i++){
+				enemy[i].coordx-=5;
 			}
 		}
 	}
