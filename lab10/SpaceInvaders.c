@@ -33,6 +33,7 @@
 #include "Sound.h"
 #include "Timer1.h"
 #define bottom 159
+#define max 15
 
 
 void DisableInterrupts(void); // Disable interrupts
@@ -46,10 +47,13 @@ void fire();
 void spawn();
 void reset();
 void gameover();
+void callme();
 uint32_t Convert(uint32_t x);
 void enemyfire(int x);
 void enemymove();
 int flag;
+int counter=5;
+int ce;
 
 struct bhd{
 	int coordx,coordy;
@@ -183,31 +187,22 @@ int main(void){
   Output_Init();
 	PortE_Init();
 	ADC_Init();
-  ST7735_FillScreen(0x0000);            // set screen to black
-  for(phrase_t myPhrase=HELLO; myPhrase<= GOODBYE; myPhrase++){
-    for(Language_t myL=English; myL<= French; myL++){
-         ST7735_OutString((char *)Phrases[LANGUAGE][myL]);
-      ST7735_OutChar(' ');
-         ST7735_OutString((char *)Phrases[myPhrase][myL]);
-      ST7735_OutChar(13);
-    }
-  }
-  Delay100ms(5);
-  ST7735_FillScreen(0x0000);       // set screen to black
-  l = 128;
-	spawn();
 	reset();
   flag=0;
+	ce=max/2;
   while(1){
 		int b=0;
 		ST7735_FillScreen(0x0000); 
 		ST7735_SetCursor(0,0);
-		enemymove();
 		playermove();
 		bulletmove();
 		hitcheck();
 		draw();
 		fire();
+		ce--;
+		if(ce==0){
+			callme();
+		}
 		if(player[0].health==0||enemy[2].coordy>=140){
 			gameover();		
 		}
@@ -218,7 +213,6 @@ int main(void){
 		if(b==0){
 			spawn();
 		}
-    Delay100ms(1);
   }  
 }
 
@@ -259,17 +253,17 @@ void draw(){
 
 void bulletmove(){
 	if(player_bullet[0].exist==1){
-		if(player_bullet[0].coordy==0){
+		if(player_bullet[0].coordy<=0){
 			player_bullet[0].exist=0;
 		}
 		else{
 			player_bullet[0].coordy-=10;
 		}
 	}
-	else{
+	//else{
 		for(int i=0;i<3;i++){
 			if(enemy_bullet[i].exist==1){
-				if(enemy_bullet[i].coordy==bottom){
+				if(enemy_bullet[i].coordy>=bottom){
 					enemy_bullet[i].exist=0;
 				}
 				else{
@@ -277,7 +271,7 @@ void bulletmove(){
 				}
 			}
 		}
-	}
+	//}
 }
 void playermove(){
 	if(player[0].exist){
@@ -449,4 +443,20 @@ void enemymove(){
 			}
 		}
 	}
+}
+void callme(){
+		counter--;
+	  enemymove();
+		if(counter==0){
+			enemyfire((Random32()>>24)%12);
+			counter=(Random32()>>24)%5+1;
+		}
+		ce=max;
+		for(int i=0;i<12;i++){
+			if(enemy[i].exist==0){
+				ce--;
+			}
+		}
+		ce=ce/2;
+		
 }
