@@ -398,8 +398,8 @@ void hitcheck(){
 				}
 		}
 	}
-	for(int i;i<3;i++){
-		for(int s;s<3;s++){
+	for(int i=0;i<3;i++){
+		for(int s=0;s<3;s++){
 			if(bunker[s].exist==1&&enemy_bullet[i].exist==1){
 				if(enemy_bullet[i].coordx>=bunker[s].coordx
 				&&enemy_bullet[i].coordx<=bunker[s].coordx+bunker[s].w
@@ -417,6 +417,29 @@ void hitcheck(){
 }
 
 void enemymove(){
+	for(int i=0;i<12;i++){
+		if(enemy[i].p==SmallEnemy10pointB){
+			enemy[i].p=SmallEnemy10pointA;
+		}
+		else if(enemy[i].p==SmallEnemy10pointA){
+			enemy[i].p=SmallEnemy10pointB;
+		}
+		else if(enemy[i].p==SmallEnemy20pointA){
+			enemy[i].p=SmallEnemy20pointB;
+		}
+		else if(enemy[i].p==SmallEnemy20pointB){
+			enemy[i].p=SmallEnemy20pointA;
+		}
+		else if(enemy[i].p==SmallEnemy10pointA){
+			enemy[i].p=SmallEnemy10pointA;
+		}
+		else if(enemy[i].p==SmallEnemy30pointB){
+			enemy[i].p=SmallEnemy30pointA;
+		}
+		else if(enemy[i].p==SmallEnemy30pointA){
+			enemy[i].p=SmallEnemy30pointB;
+		}
+	}
 	if(flag==0){
 		if(enemy[9].coordx>=110){
 			for(int i=0;i<12;i++){
